@@ -37,7 +37,13 @@ const deleteCard = (req, res) => {
         res.status(ERROR_NOT_FOUND).send({ message: `Ошибка удаления карточки` })
       }
     })
-    .catch(err => res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' }))
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(ERROR_BAD_REQUEST).send({ message: 'Не удалось удалить карточку' })
+      } else {
+        res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' })
+      }
+    })
 }
 
 const likeCard = (req, res) => {
@@ -53,7 +59,12 @@ const likeCard = (req, res) => {
         res.status(ERROR_NOT_FOUND).send({ message: 'Ошибка установки like' })
       }
     })
-    .catch(err => res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' }))
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(ERROR_BAD_REQUEST).send({ message: 'Не удалось установить like' })
+      }
+      console.log(err.name);
+    })
 }
 
 const dislikeCard = (req, res) => {
@@ -70,7 +81,13 @@ const dislikeCard = (req, res) => {
         res.status(ERROR_NOT_FOUND).send({ message: 'Ошибка снятия like' })
       }
     })
-    .catch(err => res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' }))
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(ERROR_BAD_REQUEST).send({ message: 'Не удалось убрать like' })
+      } else {
+        res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' })
+      }
+    })
 }
 
 module.exports = {
