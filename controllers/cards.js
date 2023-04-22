@@ -3,9 +3,9 @@ const { ERROR_BAD_REQUEST, ERROR_NOT_FOUND, ERROR_INTERNAL_SERVER_ERROR } = requ
 
 const getCards = (req, res) => {
   Card.find({})
-    .then(cards => res.send({ data: cards }))
-    .catch(err => res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' }))
-}
+    .then((cards) => res.send({ data: cards }))
+    .catch(() => res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' }));
+};
 
 const createCard = (req, res) => {
   const { name, link } = req.body;
@@ -13,87 +13,91 @@ const createCard = (req, res) => {
   const owner = req.user._id;
 
   Card.create({ name, link, owner })
-    .then(card => res.send({ data: card }))
+    .then((card) => res.send({ data: card }))
     .catch((err) => {
       const message = Object.values(err.errors)
-        .map(error => error.message)
+        .map((error) => error.message)
         .join('; ');
       if (err.name === 'ValidationError') {
-        res.status(ERROR_BAD_REQUEST).send({ message: `Введены не корректные данные: '${message}'` })
+        res.status(ERROR_BAD_REQUEST).send({ message: `Введены не корректные данные: '${message}'` });
       } else {
-        res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' })
+        res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
       }
-    })
-}
+    });
+};
 
 const deleteCard = (req, res) => {
-  const cardId = req.params.cardId;
+  const { cardId } = req.params;
 
   Card.findByIdAndRemove(cardId)
     .then((card) => {
       if (card) {
-        res.send({ data: card })
+        res.send({ data: card });
       } else {
-        res.status(ERROR_NOT_FOUND).send({ message: `Ошибка удаления карточки` })
+        res.status(ERROR_NOT_FOUND).send({ message: 'Ошибка удаления карточки' });
       }
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(ERROR_BAD_REQUEST).send({ message: 'Не удалось удалить карточку' })
+        res.status(ERROR_BAD_REQUEST).send({ message: 'Не удалось удалить карточку' });
       } else {
-        res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' })
+        res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
       }
-    })
-}
+    });
+};
 
 const likeCard = (req, res) => {
-  const cardId = req.params.cardId;
+  const { cardId } = req.params;
 
   Card.findByIdAndUpdate(
     cardId,
-    { $addToSet: { likes: req.user._id } }, { new: true })
+    { $addToSet: { likes: req.user._id } },
+
+    { new: true },
+  )
     .then((card) => {
       if (card) {
-        res.send({ data: card })
+        res.send({ data: card });
       } else {
-        res.status(ERROR_NOT_FOUND).send({ message: 'Ошибка установки like' })
+        res.status(ERROR_NOT_FOUND).send({ message: 'Ошибка установки like' });
       }
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(ERROR_BAD_REQUEST).send({ message: 'Не удалось установить like' })
+        res.status(ERROR_BAD_REQUEST).send({ message: 'Не удалось установить like' });
       }
       console.log(err.name);
-    })
-}
+    });
+};
 
 const dislikeCard = (req, res) => {
-  const cardId = req.params.cardId;
+  const { cardId } = req.params;
 
   Card.findByIdAndUpdate(
     cardId,
     { $pull: { likes: req.user._id } },
-    { new: true })
+    { new: true },
+  )
     .then((card) => {
       if (card) {
-        res.send({ data: card })
+        res.send({ data: card });
       } else {
-        res.status(ERROR_NOT_FOUND).send({ message: 'Ошибка снятия like' })
+        res.status(ERROR_NOT_FOUND).send({ message: 'Ошибка снятия like' });
       }
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(ERROR_BAD_REQUEST).send({ message: 'Не удалось убрать like' })
+        res.status(ERROR_BAD_REQUEST).send({ message: 'Не удалось убрать like' });
       } else {
-        res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' })
+        res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
       }
-    })
-}
+    });
+};
 
 module.exports = {
   getCards,
   createCard,
   deleteCard,
   likeCard,
-  dislikeCard
-}
+  dislikeCard,
+};
