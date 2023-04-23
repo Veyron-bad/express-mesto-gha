@@ -1,10 +1,10 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const { ERROR_NOT_FOUND } = require('./src/utils/err-name');
 
 const { PORT = 3000 } = process.env;
-const routerUsers = require('./routes/users');
-const routerCards = require('./routes/cards');
-const { ERROR_NOT_FOUND } = require('./utils/err-name');
+
+const rootRoute = require('./src/routes/index');
 
 const app = express();
 
@@ -16,20 +16,13 @@ mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
 
 app.use((req, res, next) => {
   req.user = {
-    _id: '643fd57e079a1d97fabc0722',
+    _id: '644557e40998e44a6b6fab07',
   };
 
   next();
 });
 
-app.use('/users', routerUsers);
-app.use('/users', routerUsers);
-app.use('/', routerUsers);
-
-app.use('/cards', routerCards);
-app.use('/cards', routerCards);
-app.use('/', routerCards);
-
+app.use('/', rootRoute);
 app.use('*', (req, res) => {
   res.status(ERROR_NOT_FOUND).send({ message: 'Страница не найдена 404' });
 });
