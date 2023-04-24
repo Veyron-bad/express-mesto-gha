@@ -19,7 +19,7 @@ const createCard = (req, res) => {
   const ownerId = req.user._id;
 
   Card.create({
-    name, link, owner: ownerId, likes: ownerId,
+    name, link, owner: ownerId,
   })
     .then((card) => res.status(CREATED).send({ data: card }))
     .catch((err) => {

@@ -1,6 +1,8 @@
 const { default: mongoose } = require('mongoose');
 const User = require('../models/user');
 
+const { handelError } = require('../utils/handel-error');
+
 const { CastError, ValidationError } = mongoose.Error;
 
 const {
@@ -17,7 +19,6 @@ const createUser = (req, res) => {
         const message = Object.values(err.errors) // Используется
           .map((error) => error.message)
           .join('; ');
-
         res.status(ERROR_BAD_REQUEST).send({ message: `Введены не корректные данные: '${message}` }); // Здесь используется константа "message" для получения сообщения ошибки из схемы документа
       } else {
         res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
@@ -73,17 +74,7 @@ const updateProfile = (req, res) => {
       }
     })
     .catch((err) => {
-      if (err instanceof CastError) {
-        res.status(ERROR_BAD_REQUEST).send({ message: 'Переданы не верный данные пользователя' });
-      } else if (err instanceof ValidationError) {
-        const message = Object.values(err.errors)
-          .map((error) => error.message)
-          .join('; ');
-
-        res.status(ERROR_BAD_REQUEST).send({ message: `Введены не корректные данные: '${message}` });
-      } else {
-        res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
-      }
+      handelError(err, res);
     });
 };
 
@@ -106,19 +97,8 @@ const updateUserAvatar = (req, res) => {
       }
     })
     .catch((err) => {
-      if (err instanceof CastError) {
-        res.status(ERROR_BAD_REQUEST).send({ message: 'Переданы не верный данные пользователя' });
-      } else if (err instanceof ValidationError) {
-        const message = Object.values(err.errors)
-          .map((error) => error.message)
-          .join('; ');
-
-        res.status(ERROR_BAD_REQUEST).send({ message: `Введены не корректные данные: '${message}` });
-      } else {
-        res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
-      }
-    })
-    .catch(() => res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' }));
+      handelError(err, res);
+    });
 };
 
 module.exports = {

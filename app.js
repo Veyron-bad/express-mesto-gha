@@ -1,6 +1,5 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const { ERROR_NOT_FOUND } = require('./src/utils/err-name');
 
 const { PORT = 3000 } = process.env;
 
@@ -23,9 +22,6 @@ app.use((req, res, next) => {
 });
 
 app.use('/', rootRoute);
-app.use('*', (req, res) => {
-  res.status(ERROR_NOT_FOUND).send({ message: 'Страница не найдена 404' });
-});
 
 app.listen(PORT, () => {
   console.log(`Сервер запущен на ${PORT} порту`);
