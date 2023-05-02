@@ -1,38 +1,65 @@
 const { default: mongoose } = require('mongoose');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
-const { handelError } = require('../utils/handel-error');
+const ErrorMongoose = require('../errors/errorMongoose');
+const ErrorBadRequest = require('../errors/errorBadRequest');
+const ErrorUnauthorized = require('../errors/errUnauthorized');
 
-const { CastError, ValidationError } = mongoose.Error;
+const { CastError } = mongoose.Error;
 
 const {
-  ERROR_BAD_REQUEST, ERROR_NOT_FOUND, ERROR_INTERNAL_SERVER_ERROR, CREATED,
+  ERROR_NOT_FOUND, CREATED,
 } = require('../utils/err-name');
 
-const createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
+const login = (req, res, next) => {
+  const { email, password } = req.body;
 
-  User.create({ name, about, avatar })
-    .then((user) => res.status(CREATED).send({ data: user }))
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, 'super-strong-secret', { expiresIn: '7d' });
+      res.cookie('jwt', token, {
+        maxAge: 3600000 * 24 * 7,
+        httpOnly: true,
+      })
+
+        .end();
+    })
     .catch((err) => {
-      if (err instanceof ValidationError) {
-        const message = Object.values(err.errors) // Используется
-          .map((error) => error.message)
-          .join('; ');
-        res.status(ERROR_BAD_REQUEST).send({ message: `Введены не корректные данные: '${message}` }); // Здесь используется константа "message" для получения сообщения ошибки из схемы документа
-      } else {
-        res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
-      }
+      next(new ErrorUnauthorized(err.message));
     });
 };
 
-const getUsers = (req, res) => {
-  User.find({})
-    .then((user) => res.send({ data: user }))
-    .catch(() => res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' }));
+const createUser = (req, res, next) => {
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      name, about, avatar, email, password: hash,
+    }))
+    .then((user) => {
+      const response = user.toObject();
+      delete response.password;
+      res.status(CREATED).send({ data: response });
+    })
+    .catch((err) => {
+      if (err.code === 11000) {
+        next(new ErrorMongoose('Указанный email уже зарегистрирован'));
+      }
+      next(err);
+    });
 };
 
-const getUserById = (req, res) => {
+const getUsers = (req, res, next) => {
+  User.find({})
+    .then((user) => res.send({ data: user }))
+    .catch(next);
+};
+
+const getUserById = (req, res, next) => {
   const { userId } = req.params;
 
   User.findById(userId)
@@ -45,14 +72,13 @@ const getUserById = (req, res) => {
     })
     .catch((err) => {
       if (err instanceof CastError) {
-        res.status(ERROR_BAD_REQUEST).send({ message: 'Переданы не корректные данные пользователя' });
-      } else {
-        res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+        next(new ErrorBadRequest('Переданы не корректные данные пользователя'));
       }
+      next(err);
     });
 };
 
-const updateProfile = (req, res) => {
+const updateProfile = (req, res, next) => {
   const userId = req.user._id;
 
   User.findByIdAndUpdate(
@@ -74,11 +100,14 @@ const updateProfile = (req, res) => {
       }
     })
     .catch((err) => {
-      handelError(err, res);
+      if (err instanceof CastError) {
+        next(new ErrorBadRequest('Переданы не корректные данные пользователя'));
+      }
+      next(err);
     });
 };
 
-const updateUserAvatar = (req, res) => {
+const updateUserAvatar = (req, res, next) => {
   const userId = req.user._id;
 
   User.findByIdAndUpdate(
@@ -97,7 +126,27 @@ const updateUserAvatar = (req, res) => {
       }
     })
     .catch((err) => {
-      handelError(err, res);
+      if (err instanceof CastError) {
+        next(new ErrorBadRequest('Переданы не корректные данные пользователя'));
+      }
+      next(err);
+    });
+};
+
+const getUserInfo = (req, res, next) => {
+  User.findById(req.user._id)
+    .then((user) => {
+      if (!user) {
+        return Promise.reject(new Error('Пользователь не найден'));
+      }
+
+      res.status(200).send({ data: user });
+    })
+    .catch((err) => {
+      if (err instanceof CastError) {
+        next(new ErrorBadRequest('Переданы не корректные данные пользователя'));
+      }
+      next(err);
     });
 };
 
@@ -107,4 +156,6 @@ module.exports = {
   getUserById,
   updateProfile,
   updateUserAvatar,
+  login,
+  getUserInfo,
 };

@@ -1,19 +1,20 @@
 const { default: mongoose } = require('mongoose');
 const Card = require('../models/card');
 const {
-  ERROR_BAD_REQUEST, ERROR_NOT_FOUND, ERROR_INTERNAL_SERVER_ERROR, CREATED,
+  ERROR_NOT_FOUND, CREATED, ERROR_UNAUTHORIZED,
 } = require('../utils/err-name');
+const ErrorBadRequest = require('../errors/errorBadRequest');
 
-const { CastError, ValidationError } = mongoose.Error;
+const { CastError } = mongoose.Error;
 
-const getCards = (req, res) => {
+const getCards = (req, res, next) => {
   Card.find({})
     .populate(['owner', 'likes'])
     .then((cards) => res.send({ data: cards }))
-    .catch(() => res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' }));
+    .catch(next);
 };
 
-const createCard = (req, res) => {
+const createCard = (req, res, next) => {
   const { name, link } = req.body;
 
   const ownerId = req.user._id;
@@ -22,40 +23,31 @@ const createCard = (req, res) => {
     name, link, owner: ownerId,
   })
     .then((card) => res.status(CREATED).send({ data: card }))
-    .catch((err) => {
-      if (err instanceof ValidationError) {
-        const message = Object.values(err.errors)
-          .map((error) => error.message)
-          .join('; ');
-
-        res.status(ERROR_BAD_REQUEST).send({ message: `Введены не корректные данные: '${message}'` });
-      } else {
-        res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
-      }
-    });
+    .catch(next);
 };
 
-const deleteCard = (req, res) => {
+const deleteCard = (req, res, next) => {
   const { cardId } = req.params;
 
-  Card.findByIdAndRemove(cardId)
+  Card.findById(cardId)
     .then((card) => {
-      if (card) {
-        res.send({ data: card });
+      if (!card) {
+        res.status(ERROR_NOT_FOUND).send({ message: 'Карточка не найдена' });
+      }
+      if (card.owner.valueOf() === req.user._id) {
+        Card.deleteOne({ _id: card._id })
+          .then((delCard) => {
+            res.status(200).send({ data: delCard });
+          });
       } else {
-        res.status(ERROR_NOT_FOUND).send({ message: 'Ошибка удаления карточки' });
+        // Вернуть ошибку по другому
+        res.status(ERROR_UNAUTHORIZED).send({ message: 'Необходимо авторизоваться' });
       }
     })
-    .catch((err) => {
-      if (err instanceof CastError) {
-        res.status(ERROR_BAD_REQUEST).send({ message: 'Не удалось удалить карточку' });
-      } else {
-        res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
-      }
-    });
+    .catch(next);
 };
 
-const likeCard = (req, res) => {
+const likeCard = (req, res, next) => {
   const { cardId } = req.params;
 
   Card.findByIdAndUpdate(
@@ -73,14 +65,13 @@ const likeCard = (req, res) => {
     })
     .catch((err) => {
       if (err instanceof CastError) {
-        res.status(ERROR_BAD_REQUEST).send({ message: 'Не удалось установить like' });
-      } else {
-        res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+        next(new ErrorBadRequest('Не удалось установить like'));
       }
+      next(err);
     });
 };
 
-const dislikeCard = (req, res) => {
+const dislikeCard = (req, res, next) => {
   const { cardId } = req.params;
 
   Card.findByIdAndUpdate(
@@ -97,10 +88,9 @@ const dislikeCard = (req, res) => {
     })
     .catch((err) => {
       if (err instanceof CastError) {
-        res.status(ERROR_BAD_REQUEST).send({ message: 'Не удалось убрать like' });
-      } else {
-        res.status(ERROR_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+        next(new ErrorBadRequest('Не удалось убрать like'));
       }
+      next(err);
     });
 };
 
