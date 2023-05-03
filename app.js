@@ -23,6 +23,7 @@ app.use(errors());
 
 app.use((err, res) => {
   const { statusCode = 500, message } = err;
+console.log('err=>', statusCode)
   res.status(statusCode).send({ message: statusCode === 500 ? 'На сервере произошла ошибка' : message });
 });
 
