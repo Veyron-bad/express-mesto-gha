@@ -46,10 +46,8 @@ const createUser = (req, res, next) => {
       res.status(CREATED).send({ data: response });
     })
     .catch((err) => {
-      // console.log('err=>', err.code)
       if (err.code === 11000) {
-        // next(new ErrorMongoose('Указанный email уже зарегистрирован'));
-        res.status(409).send({ message: "Указанный email уже зарегистрирован"})
+        next(new ErrorMongoose('Пользователь с таким email уже зарегистирован'));
       }
       next(err);
     });
