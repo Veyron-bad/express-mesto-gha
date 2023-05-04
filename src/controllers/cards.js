@@ -1,13 +1,8 @@
-const { default: mongoose } = require('mongoose');
 const Card = require('../models/card');
-const {
-  ERROR_NOT_FOUND, CREATED, ERROR_UNAUTHORIZED,
-} = require('../utils/err-name');
-const ErrorBadRequest = require('../errors/errorBadRequest');
+const { CREATED } = require('../utils/err-name');
+
 const ErrorNotFound = require('../errors/errorNotFound');
 const ErrorUnauthorized = require('../errors/errUnauthorized');
-
-const { CastError } = mongoose.Error;
 
 const getCards = (req, res, next) => {
   Card.find({})
@@ -79,15 +74,10 @@ const dislikeCard = (req, res, next) => {
       if (card) {
         res.send({ data: card });
       } else {
-        res.status(ERROR_NOT_FOUND).send({ message: 'Ошибка снятия like' });
+        throw new ErrorNotFound('Ошибка снятия like');
       }
     })
-    .catch((err) => {
-      if (err instanceof CastError) {
-        next(new ErrorBadRequest('Не удалось убрать like'));
-      }
-      next(err);
-    });
+    .catch(next);
 };
 
 module.exports = {
