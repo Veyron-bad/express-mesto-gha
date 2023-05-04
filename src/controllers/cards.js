@@ -2,7 +2,7 @@ const Card = require('../models/card');
 const { CREATED } = require('../utils/err-name');
 
 const ErrorNotFound = require('../errors/errorNotFound');
-const ErrorUnauthorized = require('../errors/errUnauthorized');
+const ErrorForbidden = require('../errors/errUnauthorized');
 
 const getCards = (req, res, next) => {
   Card.find({})
@@ -37,7 +37,7 @@ const deleteCard = (req, res, next) => {
             res.status(200).send({ data: delCard });
           });
       } else {
-        throw new ErrorUnauthorized('Необходимо авторизоваться');
+        throw new ErrorForbidden('Необходимо авторизоваться');
       }
     })
     .catch(next);
