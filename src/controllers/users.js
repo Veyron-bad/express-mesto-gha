@@ -6,6 +6,7 @@ const User = require('../models/user');
 const ErrorMongoose = require('../errors/errorMongoose');
 const ErrorBadRequest = require('../errors/errorBadRequest');
 const ErrorUnauthorized = require('../errors/errUnauthorized');
+const ErrorNotFound = require('../errors/errorNotFound');
 
 const { CastError } = mongoose.Error;
 
@@ -67,15 +68,10 @@ const getUserById = (req, res, next) => {
       if (user) {
         res.send({ data: user });
       } else {
-        res.status(ERROR_NOT_FOUND).send({ message: 'Пользователь не найден' });
+        throw new ErrorNotFound('Пользователь не найден');
       }
     })
-    .catch((err) => {
-      if (err instanceof CastError) {
-        next(new ErrorBadRequest('Переданы не корректные данные пользователя'));
-      }
-      next(err);
-    });
+    .catch(next);
 };
 
 const updateProfile = (req, res, next) => {
