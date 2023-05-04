@@ -2,7 +2,7 @@ const Card = require('../models/card');
 const { CREATED } = require('../utils/err-name');
 
 const ErrorNotFound = require('../errors/errorNotFound');
-const ErrorForbidden = require('../errors/errUnauthorized');
+const ErrorForbidden = require('../errors/errorForbidden');
 
 const getCards = (req, res, next) => {
   Card.find({})
