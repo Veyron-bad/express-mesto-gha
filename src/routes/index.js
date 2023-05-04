@@ -7,7 +7,12 @@ const { login, createUser } = require('../controllers/users');
 const auth = require('../middlewares/auth');
 const urlRegEx = require('../utils/urlRegEx');
 
-rootRoute.post('/signin', login);
+rootRoute.post('/signin', celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required(urlRegEx).email(),
+    password: Joi.string().required().min(8),
+  }),
+}), login);
 rootRoute.post('/signup', celebrate({
   body: Joi.object().keys({
     email: Joi.string().required().email(),
