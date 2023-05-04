@@ -22,9 +22,9 @@ const login = (req, res, next) => {
       res.cookie('jwt', token, {
         maxAge: 3600000 * 24 * 7,
         httpOnly: true,
-      })
+      });
 
-        .end();
+      res.send({ message: 'Авторизация успешна' });
     })
     .catch((err) => {
       next(new ErrorUnauthorized(err.message));
