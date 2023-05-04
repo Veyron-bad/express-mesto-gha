@@ -4,6 +4,8 @@ const {
   ERROR_NOT_FOUND, CREATED, ERROR_UNAUTHORIZED,
 } = require('../utils/err-name');
 const ErrorBadRequest = require('../errors/errorBadRequest');
+const ErrorNotFound = require('../errors/errorNotFound');
+const ErrorUnauthorized = require('../errors/errUnauthorized');
 
 const { CastError } = mongoose.Error;
 
@@ -32,7 +34,7 @@ const deleteCard = (req, res, next) => {
   Card.findById(cardId)
     .then((card) => {
       if (!card) {
-        res.status(ERROR_NOT_FOUND).send({ message: 'Карточка не найдена' });
+        throw new ErrorNotFound('Карточка не найдена');
       }
       if (card.owner.valueOf() === req.user._id) {
         Card.deleteOne({ _id: card._id })
@@ -40,8 +42,7 @@ const deleteCard = (req, res, next) => {
             res.status(200).send({ data: delCard });
           });
       } else {
-        // Вернуть ошибку по другому
-        res.status(ERROR_UNAUTHORIZED).send({ message: 'Необходимо авторизоваться' });
+        throw new ErrorUnauthorized('Необходимо авторизоваться');
       }
     })
     .catch(next);
@@ -60,15 +61,10 @@ const likeCard = (req, res, next) => {
       if (card) {
         res.send({ data: card });
       } else {
-        res.status(ERROR_NOT_FOUND).send({ message: 'Ошибка установки like' });
+        throw new ErrorNotFound('Ошибка установки like');
       }
     })
-    .catch((err) => {
-      if (err instanceof CastError) {
-        next(new ErrorBadRequest('Не удалось установить like'));
-      }
-      next(err);
-    });
+    .catch(next);
 };
 
 const dislikeCard = (req, res, next) => {

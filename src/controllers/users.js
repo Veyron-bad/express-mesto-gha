@@ -92,7 +92,7 @@ const updateProfile = (req, res, next) => {
       if (user) {
         res.send({ data: user });
       } else {
-        res.status(ERROR_NOT_FOUND).send({ message: 'Пользователь не найден' });
+        throw new ErrorNotFound('Пользователь не найден');
       }
     })
     .catch((err) => {

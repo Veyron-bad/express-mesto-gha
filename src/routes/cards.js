@@ -13,7 +13,11 @@ routerCards.post('/cards', celebrate({
   },
 }), createCard);
 routerCards.delete('/cards/:cardId', deleteCard);
-routerCards.put('/cards/:cardId/likes', likeCard);
+routerCards.put('/cards/:cardId/likes', celebrate({
+  params: {
+    cardId: Joi.string().alphanum().length(24),
+  },
+}), likeCard);
 routerCards.delete('/cards/:cardId/likes', dislikeCard);
 
 module.exports = routerCards;
