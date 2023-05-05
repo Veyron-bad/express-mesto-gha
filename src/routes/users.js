@@ -8,7 +8,7 @@ const {
 routerUsers.get('/users/me', getUserInfo);
 routerUsers.get('/users/:userId', celebrate({
   params: {
-    userId: Joi.string().alphanum().length(24),
+    userId: Joi.string().hex().length(24).required(),
   },
 }), getUserById);
 routerUsers.get('/users', getUsers);

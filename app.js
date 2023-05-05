@@ -5,6 +5,7 @@ const { PORT = 3000 } = process.env;
 
 const cookieParser = require('cookie-parser');
 const { errors } = require('celebrate');
+const handlerError = require('./src/middlewares/handlerError');
 const rootRoute = require('./src/routes/index');
 
 const app = express();
@@ -21,11 +22,7 @@ app.use('/', rootRoute);
 
 app.use(errors());
 
-app.use((err, req, res, next) => {
-  const { statusCode = 500, message } = err;
-
-  res.status(statusCode).send({ message: statusCode === 500 ? 'На сервере произошла ошибка' : message });
-});
+app.use(handlerError);
 
 app.listen(PORT, () => {
   console.log(`Сервер запущен на ${PORT} порту`);

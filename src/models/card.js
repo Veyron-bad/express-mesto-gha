@@ -12,7 +12,7 @@ const cardSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Поле не заполнено'],
     validate:
-    (v) => urlRegEx.test(v),
+      (v) => urlRegEx.test(v),
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,

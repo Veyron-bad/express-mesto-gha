@@ -14,17 +14,17 @@ routerCards.post('/cards', celebrate({
 }), createCard);
 routerCards.delete('/cards/:cardId', celebrate({
   params: {
-    cardId: Joi.string().alphanum().length(24),
+    cardId: Joi.string().hex().length(24).required(),
   },
 }), deleteCard);
 routerCards.put('/cards/:cardId/likes', celebrate({
   params: {
-    cardId: Joi.string().alphanum().length(24),
+    cardId: Joi.string().hex().length(24).required(),
   },
 }), likeCard);
 routerCards.delete('/cards/:cardId/likes', celebrate({
   params: {
-    cardId: Joi.string().alphanum().length(24),
+    cardId: Joi.string().hex().length(24).required(),
   },
 }), dislikeCard);
 

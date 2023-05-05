@@ -2,7 +2,7 @@ const rootRoute = require('express').Router();
 const { celebrate, Joi } = require('celebrate');
 const routerUsers = require('./users');
 const routerCards = require('./cards');
-const { ERROR_NOT_FOUND } = require('../utils/err-name');
+const ErrorNotFound = require('../errors/errorNotFound');
 const { login, createUser } = require('../controllers/users');
 const auth = require('../middlewares/auth');
 const urlRegEx = require('../utils/urlRegEx');
@@ -27,8 +27,8 @@ rootRoute.use(auth);
 rootRoute.use('/', routerUsers);
 rootRoute.use('/', routerCards);
 
-rootRoute.use('*', (req, res) => {
-  res.status(ERROR_NOT_FOUND).send({ message: 'Страница не найдена 404' });
+rootRoute.use('*', (req, res, next) => {
+  next(new ErrorNotFound('Страница не найдена 404'));
 });
 
 module.exports = rootRoute;

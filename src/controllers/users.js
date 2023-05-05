@@ -1,18 +1,12 @@
-const { default: mongoose } = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
 const ErrorMongoose = require('../errors/errorMongoose');
 const ErrorBadRequest = require('../errors/errorBadRequest');
-const ErrorUnauthorized = require('../errors/errUnauthorized');
 const ErrorNotFound = require('../errors/errorNotFound');
 
-const { CastError } = mongoose.Error;
-
-const {
-  ERROR_NOT_FOUND, CREATED,
-} = require('../utils/err-name');
+const { CREATED } = require('../utils/err-name');
 
 const login = (req, res, next) => {
   const { email, password } = req.body;
@@ -27,9 +21,7 @@ const login = (req, res, next) => {
 
       res.send({ message: 'Авторизация успешна' });
     })
-    .catch((err) => {
-      next(new ErrorUnauthorized(err.message));
-    });
+    .catch(next);
 };
 
 const createUser = (req, res, next) => {
@@ -49,8 +41,11 @@ const createUser = (req, res, next) => {
     .catch((err) => {
       if (err.code === 11000) {
         next(new ErrorMongoose('Пользователь с таким email уже зарегистирован'));
+      } else if (err.name === 'ValidationError') {
+        next(new ErrorBadRequest('Некорректные данные при создании пользователя'));
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 
@@ -96,10 +91,11 @@ const updateProfile = (req, res, next) => {
       }
     })
     .catch((err) => {
-      if (err instanceof CastError) {
+      if (err.name === 'ValidationError') {
         next(new ErrorBadRequest('Переданы не корректные данные пользователя'));
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 
@@ -118,14 +114,15 @@ const updateUserAvatar = (req, res, next) => {
       if (user) {
         res.send({ data: user });
       } else {
-        res.status(ERROR_NOT_FOUND).send({ message: 'Пользователь не найден' });
+        throw new ErrorNotFound('Пользователь не найден');
       }
     })
     .catch((err) => {
-      if (err instanceof CastError) {
+      if (err.name === 'ValidationError') {
         next(new ErrorBadRequest('Переданы не корректные данные пользователя'));
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 
@@ -133,16 +130,16 @@ const getUserInfo = (req, res, next) => {
   User.findById(req.user._id)
     .then((user) => {
       if (!user) {
-        return Promise.reject(new Error('Пользователь не найден'));
+        return Promise.reject(new ErrorNotFound('Пользователь не найден'));
       }
-
-      res.status(200).send({ data: user });
+      return res.status(200).send({ data: user });
     })
     .catch((err) => {
-      if (err instanceof CastError) {
+      if (err.name === 'ValidationError') {
         next(new ErrorBadRequest('Переданы не корректные данные пользователя'));
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 

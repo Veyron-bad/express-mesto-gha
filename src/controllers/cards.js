@@ -3,6 +3,7 @@ const { CREATED } = require('../utils/err-name');
 
 const ErrorNotFound = require('../errors/errorNotFound');
 const ErrorForbidden = require('../errors/errorForbidden');
+const ErrorBadRequest = require('../errors/errorBadRequest');
 
 const getCards = (req, res, next) => {
   Card.find({})
@@ -20,7 +21,13 @@ const createCard = (req, res, next) => {
     name, link, owner: ownerId,
   })
     .then((card) => res.status(CREATED).send({ data: card }))
-    .catch(next);
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        next(new ErrorBadRequest('Некорректные данные при создании карточки'));
+      } else {
+        next(err);
+      }
+    });
 };
 
 const deleteCard = (req, res, next) => {
@@ -33,9 +40,10 @@ const deleteCard = (req, res, next) => {
       }
       if (card.owner.valueOf() === req.user._id) {
         Card.deleteOne({ _id: card._id })
-          .then((delCard) => {
-            res.status(200).send({ data: delCard });
-          });
+          .then(() => {
+            res.status(200).send({ message: 'Карточка удалена' });
+          })
+          .catch(next);
       } else {
         throw new ErrorForbidden('Необходимо авторизоваться');
       }
